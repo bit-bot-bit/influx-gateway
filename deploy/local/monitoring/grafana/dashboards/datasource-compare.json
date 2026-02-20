@@ -1,0 +1,128 @@
+{
+  "id": null,
+  "uid": "influx-datasource-compare",
+  "title": "Influx Datasource Explorer",
+  "tags": ["influx", "gateway", "compare"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 2,
+  "refresh": "10s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "ds",
+        "label": "Datasource",
+        "type": "datasource",
+        "query": "influxdb",
+        "refresh": 1,
+        "current": {
+          "text": "Influx Gateway (Flux)",
+          "value": "Influx Gateway (Flux)"
+        },
+        "regex": "/^(Influx Gateway \\(Flux\\)|Influx-A \\(Flux\\)|Influx-B \\(Flux\\))$/",
+        "includeAll": false,
+        "multi": false
+      },
+      {
+        "name": "agg",
+        "label": "Aggregate Window",
+        "type": "custom",
+        "query": "10s,30s,1m,5m",
+        "current": {
+          "text": "1m",
+          "value": "1m"
+        },
+        "includeAll": false,
+        "multi": false
+      },
+      {
+        "name": "profile",
+        "label": "Series Profile",
+        "type": "custom",
+        "query": "viz,stress",
+        "current": {
+          "text": "viz",
+          "value": "viz"
+        },
+        "includeAll": false,
+        "multi": false
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "http_requests latency p95 (ms)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "datasource": {"type": "influxdb", "uid": "$ds"},
+      "targets": [
+        {
+          "refId": "A",
+          "query": "from(bucket: \"metrics\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"http_requests\" and r._field == \"latency_ms\" and r.profile == \"${profile}\") |> group(columns: [\"_field\"]) |> window(every: ${agg}) |> quantile(q: 0.95, method: \"estimate_tdigest\") |> duplicate(column: \"_stop\", as: \"_time\") |> window(every: inf)",
+          "datasource": {"type": "influxdb", "uid": "$ds"}
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "http_requests volume",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "datasource": {"type": "influxdb", "uid": "$ds"},
+      "targets": [
+        {
+          "refId": "B",
+          "query": "from(bucket: \"metrics\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"http_requests\" and r._field == \"latency_ms\" and r.profile == \"${profile}\") |> group(columns: [\"_field\"]) |> aggregateWindow(every: ${agg}, fn: count, createEmpty: false)",
+          "datasource": {"type": "influxdb", "uid": "$ds"}
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "cpu usage_user mean",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "datasource": {"type": "influxdb", "uid": "$ds"},
+      "targets": [
+        {
+          "refId": "C",
+          "query": "from(bucket: \"metrics\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"cpu\" and r._field == \"usage_user\" and r.profile == \"${profile}\") |> group(columns: [\"_field\"]) |> aggregateWindow(every: ${agg}, fn: mean, createEmpty: false)",
+          "datasource": {"type": "influxdb", "uid": "$ds"}
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "security_events score p99",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "datasource": {"type": "influxdb", "uid": "$ds"},
+      "targets": [
+        {
+          "refId": "D",
+          "query": "from(bucket: \"metrics\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"security_events\" and r._field == \"score\" and r.profile == \"${profile}\") |> group(columns: [\"_field\"]) |> window(every: ${agg}) |> quantile(q: 0.99, method: \"estimate_tdigest\") |> duplicate(column: \"_stop\", as: \"_time\") |> window(every: inf)",
+          "datasource": {"type": "influxdb", "uid": "$ds"}
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "runtime Alloc (_monitoring)",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+      "datasource": {"type": "influxdb", "uid": "$ds"},
+      "targets": [
+        {
+          "refId": "E",
+          "query": "from(bucket: \"_monitoring\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"runtime\" and r._field == \"Alloc\") |> aggregateWindow(every: ${agg}, fn: mean, createEmpty: false)",
+          "datasource": {"type": "influxdb", "uid": "$ds"}
+        }
+      ]
+    }
+  ]
+}

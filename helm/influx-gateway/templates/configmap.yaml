@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "influx-gateway.fullname" . }}-config
+data:
+  REDIS_ADDR: {{ .Values.redis.addr | quote }}
+  UPSTREAM_TIMEOUT_SECONDS: {{ .Values.gateway.upstreamTimeoutSeconds | quote }}
+  FRESHNESS_WINDOW_SECONDS: {{ .Values.gateway.freshnessWindowSeconds | quote }}
+  CACHE_TTL_SECONDS: {{ .Values.gateway.cacheTTLSeconds | quote }}
+  CACHE_LOCK_TTL_SECONDS: {{ .Values.gateway.cacheLockTTLSeconds | quote }}
+  CACHE_LOCK_WAIT_MILLISECONDS: {{ .Values.gateway.cacheLockWaitMilliseconds | quote }}
+  FORWARD_RETRIES: {{ .Values.gateway.forwardRetries | quote }}
+  PROBE_INTERVAL_SECONDS: {{ .Values.gateway.probeIntervalSeconds | quote }}
+  BREAKER_FAILURES: {{ .Values.gateway.breakerFailures | quote }}
+  BREAKER_COOLDOWN_SECONDS: {{ .Values.gateway.breakerCooldownSeconds | quote }}
+  TARGETS_JSON: {{ .Values.targets | toJson | quote }}

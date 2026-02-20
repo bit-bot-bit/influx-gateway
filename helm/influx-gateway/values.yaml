@@ -1,0 +1,58 @@
+replicaCount: 2
+
+image:
+  repository: influx-gateway
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: influx-gateway.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources: {}
+
+redis:
+  addr: redis-master.default.svc.cluster.local:6379
+
+gateway:
+  token: change-me
+  upstreamTimeoutSeconds: 60
+  freshnessWindowSeconds: 15
+  cacheTTLSeconds: 60
+  cacheLockTTLSeconds: 5
+  cacheLockWaitMilliseconds: 800
+  forwardRetries: 1
+  probeIntervalSeconds: 10
+  breakerFailures: 3
+  breakerCooldownSeconds: 20
+
+targets:
+  - name: influx-a
+    url: http://influx-a.default.svc.cluster.local:8086
+    token: replace-with-token-a
+    weight: 1
+  - name: influx-b
+    url: http://influx-b.default.svc.cluster.local:8086
+    token: replace-with-token-b
+    weight: 1
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+serviceMonitor:
+  enabled: false

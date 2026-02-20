@@ -1,0 +1,136 @@
+services:
+  redis:
+    image: redis:7.4-alpine
+    ports:
+      - "6379:6379"
+
+  influx-a:
+    image: influxdb:2.7
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: adminadmin
+      DOCKER_INFLUXDB_INIT_ORG: acme
+      DOCKER_INFLUXDB_INIT_BUCKET: metrics
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: admin-token
+
+  influx-b:
+    image: influxdb:2.7
+    ports:
+      - "8087:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: adminadmin
+      DOCKER_INFLUXDB_INIT_ORG: acme
+      DOCKER_INFLUXDB_INIT_BUCKET: metrics
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: admin-token
+
+  ministream:
+    image: curlimages/curl:8.11.1
+    depends_on:
+      - influx-a
+      - influx-b
+    entrypoint: ["/bin/sh", "/app/ministream.sh"]
+    environment:
+      ORG: acme
+      BUCKET: metrics
+      TOKEN: admin-token
+      INTERVAL_SECONDS: "2"
+      TELEGRAF_INGEST_URL: http://telegraf:8186/api/v2/write
+    volumes:
+      - ./ministream.sh:/app/ministream.sh:Z
+
+  gateway:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8080"
+    depends_on:
+      - redis
+      - influx-a
+      - influx-b
+      - ministream
+    environment:
+      HTTP_ADDR: ":8080"
+      GATEWAY_TOKEN: gateway-reader
+      REDIS_ADDR: redis:6379
+      UPSTREAM_TIMEOUT_SECONDS: "60"
+      FRESHNESS_WINDOW_SECONDS: "15"
+      CACHE_TTL_SECONDS: "30"
+      CACHE_TTL_JITTER_SECONDS: "5"
+      CACHE_LOCK_TTL_SECONDS: "5"
+      CACHE_LOCK_WAIT_MILLISECONDS: "800"
+      SLOW_QUERY_THRESHOLD_MILLISECONDS: "2000"
+      QUERY_PREVIEW_CHARS: "240"
+      FORWARD_RETRIES: "1"
+      PROBE_INTERVAL_SECONDS: "10"
+      BREAKER_FAILURES: "3"
+      BREAKER_COOLDOWN_SECONDS: "20"
+      TARGETS_JSON: >-
+        [{"name":"influx-a","url":"http://influx-a:8086","token":"admin-token","weight":1},
+         {"name":"influx-b","url":"http://influx-b:8086","token":"admin-token","weight":1}]
+
+  telegraf:
+    image: telegraf:1.32-alpine
+    entrypoint: ["telegraf", "--config", "/etc/telegraf/telegraf.conf"]
+    depends_on:
+      - influx-a
+      - influx-b
+    ports:
+      - "8186:8186"
+      - "9273:9273"
+    volumes:
+      - ./monitoring/telegraf.conf:/etc/telegraf/telegraf.conf:Z
+
+  blackbox:
+    image: prom/blackbox-exporter:v0.25.0
+    ports:
+      - "9115:9115"
+    volumes:
+      - ./monitoring/blackbox.yml:/config/blackbox.yml:Z
+    command: ["--config.file=/config/blackbox.yml"]
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    ports:
+      - "9090:9090"
+    depends_on:
+      - blackbox
+      - gateway
+      - telegraf
+      - influx-a
+      - influx-b
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:Z
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    profiles: ["host-metrics"]
+    ports:
+      - "8088:8080"
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/containers:/var/lib/containers:ro
+      - /dev/disk:/dev/disk:ro
+
+  grafana:
+    image: grafana/grafana:11.1.3
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:Z
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:Z
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards-json:Z

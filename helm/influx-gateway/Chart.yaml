@@ -1,0 +1,6 @@
+apiVersion: v2
+name: influx-gateway
+description: InfluxDB 2.7 read gateway with Redis cache and multi-target routing
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

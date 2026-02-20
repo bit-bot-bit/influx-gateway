@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "influx-gateway.fullname" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "influx-gateway.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "influx-gateway.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+    spec:
+      containers:
+        - name: influx-gateway
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: HTTP_ADDR
+              value: ":8080"
+            - name: GATEWAY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "influx-gateway.fullname" . }}-secret
+                  key: GATEWAY_TOKEN
+            - name: REDIS_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "influx-gateway.fullname" . }}-config
+                  key: REDIS_ADDR
+            - name: UPSTREAM_TIMEOUT_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "influx-gateway.fullname" . }}-config
+                  key: UPSTREAM_TIMEOUT_SECONDS
+            - name: FRESHNESS_WINDOW_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "influx-gateway.fullname" . }}-config
+                  key: FRESHNESS_WINDOW_SECONDS
+            - name: CACHE_TTL_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "influx-gateway.fullname" . }}-config
+                  key: CACHE_TTL_SECONDS
+            - name: CACHE_LOCK_TTL_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "influx-gateway.fullname" . }}-config
+                  key: CACHE_LOCK_TTL_SECONDS
+            - name: CACHE_LOCK_WAIT_MILLISECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "influx-gateway.fullname" . }}-config
+                  key: CACHE_LOCK_WAIT_MILLISECONDS
+            - name: FORWARD_RETRIES
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "influx-gateway.fullname" . }}-config
+                  key: FORWARD_RETRIES
+            - name: PROBE_INTERVAL_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "influx-gateway.fullname" . }}-config
+                  key: PROBE_INTERVAL_SECONDS
+            - name: BREAKER_FAILURES
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "influx-gateway.fullname" . }}-config
+                  key: BREAKER_FAILURES
+            - name: BREAKER_COOLDOWN_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "influx-gateway.fullname" . }}-config
+                  key: BREAKER_COOLDOWN_SECONDS
+            - name: TARGETS_JSON
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "influx-gateway.fullname" . }}-config
+                  key: TARGETS_JSON
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+{{ toYaml .Values.resources | indent 12 }}

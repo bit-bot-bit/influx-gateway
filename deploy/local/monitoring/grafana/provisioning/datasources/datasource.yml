@@ -1,0 +1,52 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prom
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+
+  - name: Influx Gateway (Flux)
+    uid: influx_gateway
+    type: influxdb
+    access: proxy
+    url: http://gateway:8080
+    editable: true
+    jsonData:
+      version: Flux
+      organization: acme
+      defaultBucket: metrics
+      tlsSkipVerify: true
+    secureJsonData:
+      token: gateway-reader
+
+  - name: Influx-A (Flux)
+    uid: influx_a
+    type: influxdb
+    access: proxy
+    url: http://influx-a:8086
+    editable: true
+    jsonData:
+      version: Flux
+      organization: acme
+      defaultBucket: metrics
+      tlsSkipVerify: true
+    secureJsonData:
+      token: admin-token
+
+  - name: Influx-B (Flux)
+    uid: influx_b
+    type: influxdb
+    access: proxy
+    url: http://influx-b:8086
+    editable: true
+    jsonData:
+      version: Flux
+      organization: acme
+      defaultBucket: metrics
+      tlsSkipVerify: true
+    secureJsonData:
+      token: admin-token

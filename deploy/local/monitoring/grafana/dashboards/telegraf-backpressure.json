@@ -1,0 +1,104 @@
+{
+  "id": null,
+  "uid": "telegraf-backpressure-local",
+  "title": "Telegraf Ingest & Backpressure",
+  "tags": ["telegraf", "ingest", "backpressure"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Telegraf Internal Gather Errors /s",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "sum by (input) (rate(internal_gather_gather_errors[1m])) or sum by (input) (rate(telegraf_internal_gather_gather_errors[1m]))",
+          "legendFormat": "{{input}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Telegraf Write Errors /s",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [
+        {
+          "expr": "sum by (output) (rate(internal_write_write_errors[1m])) or sum by (output) (rate(telegraf_internal_write_write_errors[1m]))",
+          "legendFormat": "{{output}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Telegraf Dropped Metrics /s",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 8},
+      "targets": [
+        {
+          "expr": "sum by (output) (rate(internal_write_metrics_dropped[1m])) or sum by (output) (rate(telegraf_internal_write_metrics_dropped[1m]))",
+          "legendFormat": "{{output}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Telegraf Written Metrics /s",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 8},
+      "targets": [
+        {
+          "expr": "sum by (output) (rate(internal_write_metrics_written[1m])) or sum by (output) (rate(telegraf_internal_write_metrics_written[1m]))",
+          "legendFormat": "{{output}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Telegraf Buffer Utilization %",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 8},
+      "targets": [
+        {
+          "expr": "100 * (sum by (output) (internal_write_buffer_size) / sum by (output) (internal_write_buffer_limit)) or 100 * (sum by (output) (telegraf_internal_write_buffer_size) / sum by (output) (telegraf_internal_write_buffer_limit))",
+          "legendFormat": "{{output}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Telegraf Write Latency p95 (ms)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, output) (rate(internal_write_write_time_ns_bucket[5m]))) / 1000000 or histogram_quantile(0.95, sum by (le, output) (rate(telegraf_internal_write_write_time_ns_bucket[5m]))) / 1000000",
+          "legendFormat": "{{output}}"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Telegraf Input Throughput /s",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+      "targets": [
+        {
+          "expr": "sum(rate(internal_agent_metrics_gathered[1m])) or sum(rate(telegraf_internal_agent_metrics_gathered[1m]))",
+          "legendFormat": "metrics_gathered"
+        },
+        {
+          "expr": "sum(rate(internal_agent_metrics_written[1m])) or sum(rate(telegraf_internal_agent_metrics_written[1m]))",
+          "legendFormat": "metrics_written"
+        }
+      ]
+    }
+  ]
+}

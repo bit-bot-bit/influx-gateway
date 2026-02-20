@@ -1,0 +1,72 @@
+{
+  "id": null,
+  "uid": "influx-direct-local",
+  "title": "Influx Direct Metrics",
+  "tags": ["influx", "flux", "direct"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "A: http_requests p95 latency_ms",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "datasource": {"type": "influxdb", "uid": "influx_a"},
+      "targets": [
+        {
+          "refId": "A",
+          "query": "from(bucket: \"metrics\") |> range(start: -30m) |> filter(fn: (r) => r._measurement == \"http_requests\" and r._field == \"latency_ms\" and r.profile == \"viz\") |> group(columns: [\"_field\"]) |> window(every: 1m) |> quantile(q: 0.95, method: \"estimate_tdigest\") |> duplicate(column: \"_stop\", as: \"_time\") |> window(every: inf)",
+          "datasource": {"type": "influxdb", "uid": "influx_a"}
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "B: http_requests p95 latency_ms",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "datasource": {"type": "influxdb", "uid": "influx_b"},
+      "targets": [
+        {
+          "refId": "B",
+          "query": "from(bucket: \"metrics\") |> range(start: -30m) |> filter(fn: (r) => r._measurement == \"http_requests\" and r._field == \"latency_ms\" and r.profile == \"viz\") |> group(columns: [\"_field\"]) |> window(every: 1m) |> quantile(q: 0.95, method: \"estimate_tdigest\") |> duplicate(column: \"_stop\", as: \"_time\") |> window(every: inf)",
+          "datasource": {"type": "influxdb", "uid": "influx_b"}
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "A: Influx runtime Alloc (from _monitoring)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "datasource": {"type": "influxdb", "uid": "influx_a"},
+      "targets": [
+        {
+          "refId": "C",
+          "query": "from(bucket: \"_monitoring\") |> range(start: -30m) |> filter(fn: (r) => r._measurement == \"runtime\" and r._field == \"Alloc\") |> aggregateWindow(every: 30s, fn: mean, createEmpty: false)",
+          "datasource": {"type": "influxdb", "uid": "influx_a"}
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "B: Influx runtime Alloc (from _monitoring)",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "datasource": {"type": "influxdb", "uid": "influx_b"},
+      "targets": [
+        {
+          "refId": "D",
+          "query": "from(bucket: \"_monitoring\") |> range(start: -30m) |> filter(fn: (r) => r._measurement == \"runtime\" and r._field == \"Alloc\") |> aggregateWindow(every: 30s, fn: mean, createEmpty: false)",
+          "datasource": {"type": "influxdb", "uid": "influx_b"}
+        }
+      ]
+    }
+  ]
+}

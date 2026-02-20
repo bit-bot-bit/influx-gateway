@@ -1,0 +1,115 @@
+{
+  "id": null,
+  "uid": "influx-fleet-local",
+  "title": "Influx Bouncer Local Fleet",
+  "tags": ["influx", "gateway", "local"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 3,
+  "refresh": "10s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Service Probe Success",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 0},
+      "targets": [
+        {"expr": "probe_success{job=\"blackbox-services\"}", "legendFormat": "{{instance}}"}
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Service Probe Duration (s)",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 0},
+      "targets": [
+        {"expr": "probe_duration_seconds{job=\"blackbox-services\"}", "legendFormat": "{{instance}}"}
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Gateway Cache Results /s",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 0},
+      "targets": [
+        {"expr": "sum by (result) (rate(influx_gateway_cache_results_total[1m]))", "legendFormat": "{{result}}"}
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Gateway Redis Latency p95 (ms)",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 8},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum by (le, op) (rate(influx_gateway_redis_latency_seconds_bucket[5m]))) * 1000", "legendFormat": "{{op}}"}
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Gateway Upstream Latency p95 (ms)",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 8},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum by (le, target) (rate(influx_gateway_upstream_latency_seconds_bucket[5m]))) * 1000", "legendFormat": "{{target}}"}
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Gateway Upstream Error Rate /s",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 8},
+      "targets": [
+        {"expr": "sum by (target) (rate(influx_gateway_upstream_latency_seconds_count{status=~\"5..|error\"}[1m]))", "legendFormat": "{{target}}"}
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Container CPU (cores)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+      "targets": [
+        {"expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name=~\".+\"}[1m]))", "legendFormat": "{{name}}"}
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Container Memory (MiB)",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+      "targets": [
+        {"expr": "sum by (name) (container_memory_working_set_bytes{name=~\".+\"}) / 1024 / 1024", "legendFormat": "{{name}}"}
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Telegraf Write Errors /s",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 16},
+      "targets": [
+        {"expr": "sum by (output) (rate(internal_write_write_errors[1m])) or sum by (output) (rate(telegraf_internal_write_write_errors[1m]))", "legendFormat": "{{output}}"}
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Telegraf Dropped Metrics /s",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 16},
+      "targets": [
+        {"expr": "sum by (output) (rate(internal_write_metrics_dropped[1m])) or sum by (output) (rate(telegraf_internal_write_metrics_dropped[1m]))", "legendFormat": "{{output}}"}
+      ]
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Telegraf Buffer Utilization %",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 16},
+      "targets": [
+        {"expr": "100 * (sum by (output) (internal_write_buffer_size) / sum by (output) (internal_write_buffer_limit)) or 100 * (sum by (output) (telegraf_internal_write_buffer_size) / sum by (output) (telegraf_internal_write_buffer_limit))", "legendFormat": "{{output}}"}
+      ]
+    }
+  ]
+}
