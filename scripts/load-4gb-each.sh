@@ -21,7 +21,7 @@ wait_stack_ready
 # Uses a disposable Go container so host Go is not required.
 "$CONTAINER_RUNTIME" run --rm --network host \
   -v "$PWD":/src:Z -w /src \
-  docker.io/library/golang:1.23 \
+  docker.io/library/golang:1.24 \
   /usr/local/go/bin/go run ./cmd/loadgen \
     -targets "$TARGETS" \
     -org "$ORG" \
