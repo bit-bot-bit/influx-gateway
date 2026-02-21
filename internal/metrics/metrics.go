@@ -1,4 +1,4 @@
-package gateway
+package metrics
 
 import (
 	"strconv"
