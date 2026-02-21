@@ -5,9 +5,16 @@ set -eu
 COMPOSE_FILE="${COMPOSE_FILE:-deploy/local/docker-compose.yml}"
 STACK_WAIT_SECONDS="${STACK_WAIT_SECONDS:-180}"
 STACK_WAIT_INTERVAL="${STACK_WAIT_INTERVAL:-2}"
+CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-podman}"
+
+if [ "$CONTAINER_RUNTIME" = "docker" ]; then
+  CONTAINER_COMPOSE="docker compose"
+else
+  CONTAINER_COMPOSE="podman compose"
+fi
 
 compose() {
-  podman compose -f "$COMPOSE_FILE" "$@"
+  $CONTAINER_COMPOSE -f "$COMPOSE_FILE" "$@"
 }
 
 require_cmd() {

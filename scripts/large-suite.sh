@@ -26,7 +26,7 @@ run_stage() {
 }
 
 echo "[suite] starting large suite"
-require_cmd podman
+require_cmd "$CONTAINER_RUNTIME"
 require_cmd curl
 
 if [ "$AUTO_SETUP" = "1" ]; then
