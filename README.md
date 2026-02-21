@@ -133,8 +133,10 @@ Tune in `helm/influx-gateway/values.yaml`:
 - Not implemented yet: Arrow split/merge concat, per-bucket routing rules.
 
 ## Container runtime note
-- Commands use `podman compose` by default.
-- If you prefer Docker, replace `podman compose` with `docker compose`.
+- Commands use `podman` by default.
+- To use Docker, set `CONTAINER_RUNTIME=docker`.
+  - Example: `make large-suite CONTAINER_RUNTIME=docker`
+  - Or export it: `export CONTAINER_RUNTIME=docker`
 
 
 ## Optional host metrics (cAdvisor)

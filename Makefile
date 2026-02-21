@@ -1,10 +1,19 @@
+CONTAINER_RUNTIME ?= podman
+export CONTAINER_RUNTIME
+
+ifeq ($(CONTAINER_RUNTIME),docker)
+	COMPOSE_CMD := docker compose
+else
+	COMPOSE_CMD := podman compose
+endif
+
 .PHONY: up down seed test stampede breaker load query-suite latency perf-suite large-suite logs
 
 up:
-	podman compose -f deploy/local/docker-compose.yml up -d --build
+	$(COMPOSE_CMD) -f deploy/local/docker-compose.yml up -d --build
 
 down:
-	podman compose -f deploy/local/docker-compose.yml down -v
+	$(COMPOSE_CMD) -f deploy/local/docker-compose.yml down -v
 
 seed:
 	./scripts/local-seed.sh
@@ -34,4 +43,4 @@ large-suite:
 	./scripts/large-suite.sh
 
 logs:
-	podman compose -f deploy/local/docker-compose.yml logs -f gateway
+	$(COMPOSE_CMD) -f deploy/local/docker-compose.yml logs -f gateway
